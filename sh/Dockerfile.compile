@@ -1,0 +1,32 @@
+FROM ubuntu:14.04
+
+RUN apt-get update \
+    && apt-get -y install software-properties-common \
+    && add-apt-repository ppa:ubuntu-toolchain-r/test \
+    && apt-get update && apt-get -y upgrade \
+    && apt-get -y install scons pkg-config protobuf-compiler libprotobuf-dev libssl-dev g++-5 wget libcurl3\
+    && apt-get clean
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 99 --slave /usr/bin/g++ g++ /usr/bin/g++-5
+
+WORKDIR /home
+ENV BOOST_VERSION 1.63.0
+ENV BOOST_NAME boost_1_63_0
+ENV BOOST_ROOT=/home/boost_1_63_0
+ENV BOOST_SHA1 9f1dd4fa364a3e3156a77dc17aa562ef06404ff6
+
+RUN mkdir $BOOST_NAME && cd $BOOST_NAME \
+    && wget https://sourceforge.net/projects/boost/files/boost/$BOOST_VERSION/$BOOST_NAME.tar.bz2 \
+    && echo "$BOOST_SHA1 $BOOST_NAME.tar.bz2" | sha1sum -c \
+    && wget https://get.docker.com/builds/Linux/x86_64/docker-latest.tgz \
+    && tar xjf $BOOST_NAME.tar.bz2 && cd $BOOST_NAME \
+    && ./bootstrap.sh --libdir=../stage/lib --includedir=.. --without-libraries=python \
+    && ./b2 -j3 install  && cd .. && rm -r $BOOST_NAME.tar.bz2 $BOOST_NAME \
+    && tar zxvf docker-latest.tgz \
+    && cp docker/docker /usr/local/bin/ \
+    && rm -rf docker docker-latest.tgz
+
+
+RUN OS_VER=`lsb_release -d | awk -F":\t" '{ print($2) }'` \
+    && echo "echo -e '\033[01;31mWelcome to bitterflychaind docker build environment based on $OS_VER, and you can type Ctrl+D to exit, if you want!\033[00m'" >> ~/.bashrc \
+    && ln -s /usr/lib/x86_64-linux-gnu/libcurl.so.4.3.0 /usr/lib/x86_64-linux-gnu/libcurl.so
+

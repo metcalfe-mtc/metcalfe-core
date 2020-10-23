@@ -1,0 +1,103 @@
+function printable(t)
+    for k,v in pairs(t) do print(k, v) end
+end
+
+local function striptable(t, reserve)
+    for k in pairs(t) do
+        if (not reserve[k]) then
+            t[k] = nil
+        end
+    end
+end
+
+local G_vtable = {
+--> legal tables
+table     = true,
+bit32     = true,
+string    = true,
+math      = true,
+coroutine = true,
+debug     = true,
+io        = true,
+os        = true,
+_G        = true,
+
+--> legal functions
+tonumber = true,
+type     = true,
+pairs    = true,
+ipairs   = true,
+tostring = true,
+select   = true,
+next     = true,
+assert   = true,
+unpack   = true,
+error    = true,
+_VERSION = true,
+pcall    = true,
+xpcall   = true,
+require  = true,
+print    = true,
+rawlen   = true,
+rawget   = true,
+rawset   = true,
+rawequal = true,
+printable     = true,
+setmetatable   = true,
+getmetatable   = true,
+collectgarbage = true,
+getledgerseq   = true,
+}
+
+local execute = os.execute
+-- sleepTime unit is ms
+local function sleep(sleepTime)
+    if(type(sleepTime)~="number")
+    then
+      	print("sleepTime is not valid number")
+    	return
+    else
+	return execute("sleep "..sleepTime/1000)
+    end
+end
+
+
+striptable(debug, {})
+striptable(io, {})
+--os.execute("pwd")
+os.sleep = sleep
+striptable(os, {date = true, time = true, difftime = true, clock = true,sleep = true})
+
+local i = string.find(_VERSION, "[0-9]")
+local version = "5.x"
+if (i) then
+   version = string.sub(_VERSION, i)
+end
+
+package.path  = string.format("./lua/%s/?.lua", version)
+package.cpath = string.format("./lua/%s/?.so", version)
+package.loaded.package = nil
+package = nil
+
+local sqlite = sqlite3
+function getledgerseq(stime, etime)
+    local db = sqlite.open("db/ledger.db", sqlite.OPEN_READONLY)
+    if (not db) then
+        return nil
+    end
+
+    etime = etime + 1
+    local min = 0
+    local max = 0
+    local sql = "SELECT MIN(LedgerSeq), MAX(LedgerSeq) FROM Ledgers WHERE ClosingTime >= " ..
+    stime .. " AND ClosingTime < " .. etime
+    for a in db:rows(sql) do
+        min = a[1]
+	max = a[2]
+    end
+
+    db:close()
+    return min, max
+end
+
+striptable(_G, G_vtable)

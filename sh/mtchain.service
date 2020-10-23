@@ -1,0 +1,15 @@
+[Unit]
+Description=mtchain
+After=syslog.target network.target sockets.target nss-lookup.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/mtchain/daemon.sh
+KillMode=mixed
+TimeoutStopSec=30s
+Restart=on-failure
+LimitNOFILE=65535
+LimitCORE=infinity
+
+[Install]
+WantedBy=multi-user.target

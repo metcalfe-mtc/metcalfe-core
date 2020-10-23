@@ -1,0 +1,3 @@
+# Public keys of the validators that this mtchaind instance trusts.
+[validators]
+n9Mn9HxLsQQtCQrB2hiMh9h2c4XrAS16urAhdZHLerthzZo29ro8
